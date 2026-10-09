@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useCampoDeBusca } from './DataTable';
 
 const MESES = [
@@ -444,8 +444,8 @@ export function DateRangeFilter({
               : 'left-0 right-auto translate-x-0'
           }`}
         >
-          {/* Seletor do Campo Ativo (Início ou Fim) */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl mb-3 text-xs">
+          {/* Seletor do Campo Ativo (Início ou Fim) perfeitamente alinhado e simétrico */}
+          <div className="flex items-center justify-between gap-1.5 p-1 bg-slate-100 rounded-xl mb-3">
             <button
               type="button"
               onClick={() => {
@@ -455,17 +455,21 @@ export function DateRangeFilter({
                   if (y && m) setViewDate(new Date(y, m - 1, 1));
                 }
               }}
-              className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition cursor-pointer flex items-center justify-center gap-1 ${
+              className={`flex-1 min-w-0 h-8 px-2 rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeField === 'inicio'
-                  ? 'bg-[#0a2540] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-[#0a2540] text-white shadow-xs font-bold'
+                  : 'bg-white text-slate-600 font-semibold border border-slate-200/80 shadow-2xs hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span className="text-[10px] uppercase tracking-wider opacity-75">Início:</span>
-              <span className="truncate">{isoToBr(valorInicio) || 'Definir'}</span>
+              <span className={`text-[10px] uppercase tracking-wider font-semibold ${activeField === 'inicio' ? 'text-white/75' : 'text-slate-400'}`}>
+                Início:
+              </span>
+              <span className="text-xs font-bold truncate">
+                {isoToBr(valorInicio) || 'Definir'}
+              </span>
             </button>
 
-            <span className="text-slate-400 font-bold text-xs select-none">→</span>
+            <ArrowRight size={13} className="text-slate-400 shrink-0" />
 
             <button
               type="button"
@@ -476,14 +480,18 @@ export function DateRangeFilter({
                   if (y && m) setViewDate(new Date(y, m - 1, 1));
                 }
               }}
-              className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-center transition cursor-pointer flex items-center justify-center gap-1 ${
+              className={`flex-1 min-w-0 h-8 px-2 rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeField === 'fim'
-                  ? 'bg-[#0a2540] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-[#0a2540] text-white shadow-xs font-bold'
+                  : 'bg-white text-slate-600 font-semibold border border-slate-200/80 shadow-2xs hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <span className="text-[10px] uppercase tracking-wider opacity-75">Fim:</span>
-              <span className="truncate">{isoToBr(valorFim) || 'Definir'}</span>
+              <span className={`text-[10px] uppercase tracking-wider font-semibold ${activeField === 'fim' ? 'text-white/75' : 'text-slate-400'}`}>
+                Fim:
+              </span>
+              <span className="text-xs font-bold truncate">
+                {isoToBr(valorFim) || 'Definir'}
+              </span>
             </button>
           </div>
 
