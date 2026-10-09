@@ -300,7 +300,7 @@ export function Toolbar({ children, extraActions }: { children: ReactNode; extra
 
   return (
     <BuscaContext.Provider value={ctx}>
-      <div onKeyDown={onKeyDown} className="no-print print:hidden p-4 border-b border-slate-100 flex flex-col gap-3.5 bg-slate-50/60">
+      <div onKeyDown={onKeyDown} className="no-print print:hidden p-4 border-b border-slate-100 flex flex-col gap-3.5 bg-slate-50/60 rounded-t-xl">
         <div className="flex flex-wrap items-center gap-3 w-full">
           {children}
         </div>
@@ -334,7 +334,7 @@ export function Toolbar({ children, extraActions }: { children: ReactNode; extra
 
 export function Card({ children, title, className = '' }: { children: ReactNode; title?: ReactNode; className?: string }) {
   return (
-    <div className={`bg-white border border-slate-200/60 rounded-xl overflow-hidden shadow-sm print:border-none print:shadow-none print:rounded-none print:bg-transparent print:p-0 print:m-0 ${className}`}>
+    <div className={`bg-white border border-slate-200/60 rounded-xl shadow-sm print:border-none print:shadow-none print:rounded-none print:bg-transparent print:p-0 print:m-0 ${className}`}>
       {title && <div className="px-5 py-3 border-b border-slate-100 font-bold text-slate-800 print:hidden">{title}</div>}
       {children}
     </div>
