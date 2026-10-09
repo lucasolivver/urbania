@@ -71,15 +71,27 @@
   box-shadow: 0 12px 32px rgb(10 37 64 / 16%);
   animation: fade-in 120ms ease-out;
 }
-.data-table-dense td {
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  white-space: nowrap;
-}
+.data-table-dense td,
 .data-table-dense th {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
   white-space: nowrap;
+}
+
+@media (min-width: 1280px) {
+  .data-table-dense td,
+  .data-table-dense th {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .data-table-dense td,
+  .data-table-dense th {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
 }
 
 @theme {

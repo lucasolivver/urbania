@@ -341,13 +341,13 @@ export default function Auditoria() {
             {
               key: 'id',
               label: 'ID',
-              className: 'w-12 whitespace-nowrap text-left',
+              className: 'w-14 min-w-[56px] whitespace-nowrap text-left',
               render: r => <span className="font-mono text-slate-500 text-xs font-semibold whitespace-nowrap">#{r.seqId || r.id}</span>,
             },
             {
               key: 'usuario',
               label: 'USUÁRIO',
-              className: 'w-32 lg:w-36 whitespace-nowrap text-left',
+              className: 'w-[17%] min-w-[150px] whitespace-nowrap text-left',
               render: r => {
                 const u = formatUsuarioDisplay(r.usuario);
                 return (
@@ -370,7 +370,7 @@ export default function Auditoria() {
             {
               key: 'computador',
               label: 'COMPUTADOR',
-              className: 'w-26 whitespace-nowrap text-left',
+              className: 'w-[13%] min-w-[125px] whitespace-nowrap text-left',
               render: r => {
                 const comp = formatComputador(r);
                 return (
@@ -386,25 +386,25 @@ export default function Auditoria() {
             {
               key: 'ip',
               label: 'ENDEREÇO IP',
-              className: 'w-24 whitespace-nowrap text-left',
+              className: 'w-[12%] min-w-[115px] whitespace-nowrap text-left',
               render: r => <span className="font-mono text-xs text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 whitespace-nowrap">{formatIp(r.ip)}</span>,
             },
             {
               key: 'data',
               label: 'DATA',
-              className: 'w-22 whitespace-nowrap text-left',
+              className: 'w-[10%] min-w-[95px] whitespace-nowrap text-left',
               render: r => <span className="text-xs font-medium text-slate-700 whitespace-nowrap">{formatDate(r.data)}</span>,
             },
             {
               key: 'hora',
               label: 'HORA',
-              className: 'w-16 whitespace-nowrap text-left',
+              className: 'w-[8%] min-w-[80px] whitespace-nowrap text-left',
               render: r => <span className="text-xs font-mono text-slate-600 whitespace-nowrap">{formatHora(r.hora)}</span>,
             },
             {
               key: 'detalhes',
               label: 'DETALHES',
-              className: 'min-w-[280px] flex-1 text-slate-700 text-left',
+              className: 'w-[28%] min-w-[240px] text-slate-700 text-left',
               render: r => {
                 const txt = formatDetalhesTexto(r.detalhes, r);
                 return (
@@ -417,7 +417,7 @@ export default function Auditoria() {
             {
               key: 'entidade',
               label: 'ENTIDADE',
-              className: 'w-28 whitespace-nowrap text-left',
+              className: 'w-[12%] min-w-[110px] whitespace-nowrap text-left',
               render: r => (
                 <div className="whitespace-nowrap inline-flex items-center" title={`${r.entidade || ''}${r.entidadeId ? ` (#${r.entidadeId})` : ''}`}>
                   <Badge className={`text-xs px-2.5 py-0.5 rounded-md font-semibold whitespace-nowrap inline-flex items-center ${

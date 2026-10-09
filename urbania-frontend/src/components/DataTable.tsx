@@ -37,17 +37,19 @@ export function DataTable<T extends { id: number }>({ columns, rows, loading, on
                 const defaultFirstWidth = idx === 0
                   ? (['id', 'codigo'].includes(c.key.toLowerCase()) ? 'w-16' : ['data', 'datahora'].includes(c.key.toLowerCase()) ? 'w-40' : '')
                   : '';
-                const widthMatch = c.className?.match(/\b(w-\S+|min-w-\S+|max-w-\S+)\b/g)?.filter(w => !w.includes('w-full')).join(' ') || defaultFirstWidth;
+                const widthMatch = c.className
+                  ? c.className.split(/\s+/).filter(cls => /^(?:(?:sm|md|lg|xl|2xl):)?(w-|min-w-|max-w-)/.test(cls) && cls !== 'w-full').join(' ')
+                  : defaultFirstWidth;
                 const alignMatch = c.className?.match(/\btext-(left|center|right)\b/g)?.join(' ') || '';
                 const thWidthClass = `${widthMatch} ${alignMatch}`.trim();
                 return (
-                  <th key={c.key} className={`px-3.5 lg:px-4 py-3.5 whitespace-nowrap ${thWidthClass}`}>
+                  <th key={c.key} className={`px-3.5 lg:px-4 2xl:px-5 py-3.5 whitespace-nowrap ${thWidthClass}`}>
                     {c.label}
                   </th>
                 );
               })}
               {actions && (
-                <th className="px-3.5 lg:px-4 py-3.5 whitespace-nowrap w-32 min-w-[116px] text-left no-print">
+                <th className="px-3.5 lg:px-4 2xl:px-5 py-3.5 whitespace-nowrap w-32 min-w-[116px] text-left no-print">
                   Ações
                 </th>
               )}
@@ -68,13 +70,13 @@ export function DataTable<T extends { id: number }>({ columns, rows, loading, on
                   const cleanClass = (c.className || 'text-slate-700').replace(/\bw-full\b/g, '').trim();
                   const colClass = `${cleanClass} ${defaultFirstWidth}`.trim();
                   return (
-                    <td key={c.key} className={`px-3.5 lg:px-4 py-3.5 ${colClass}`}>
+                    <td key={c.key} className={`px-3.5 lg:px-4 2xl:px-5 py-3.5 ${colClass}`}>
                       {c.render ? c.render(row) : String((row as any)[c.key] ?? '')}
                     </td>
                   );
                 })}
                 {actions && (
-                  <td className="px-3.5 lg:px-4 py-3.5 whitespace-nowrap w-32 min-w-[116px] text-left no-print" onClick={e => e.stopPropagation()}>
+                  <td className="px-3.5 lg:px-4 2xl:px-5 py-3.5 whitespace-nowrap w-32 min-w-[116px] text-left no-print" onClick={e => e.stopPropagation()}>
                     {actions(row)}
                   </td>
                 )}
