@@ -106,7 +106,7 @@ function ProprietarioVinculos({ proprietarioId }: { proprietarioId: number }) {
   const meusContratos = contratos.rows.filter(c => ids.includes(c.imovelId) || Number(c.proprietarioId) === Number(proprietarioId));
   const situacao = (imovelId: number) =>
     meusContratos.some(c => c.imovelId === imovelId && c.status === 'Ativo') ? 'Locado/Vendido' :
-    minhasNegociacoes.some(n => n.imovelId === imovelId && n.status === 'Realizada') ? 'Negociado' : 'Disponível';
+    minhasNegociacoes.some(n => n.imovelId === imovelId && (n.status === 'Realizada' || n.status === 'Convertida em Contrato')) ? 'Negociado' : 'Disponível';
 
   return (
     <>

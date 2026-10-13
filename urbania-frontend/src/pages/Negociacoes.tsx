@@ -324,6 +324,7 @@ export function NegociacoesList() {
 function NegociacaoHistorico({ record }: { record: Record<string, any> }) {
   const isRealizada = record.status === 'Realizada';
   const isCancelada = record.status === 'Cancelada';
+  const isConvertida = record.status === 'Convertida em Contrato';
 
   return (
     <div className="space-y-6">
@@ -346,9 +347,9 @@ function NegociacaoHistorico({ record }: { record: Record<string, any> }) {
 
           <div className="flex items-start gap-3">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-              isRealizada ? 'bg-emerald-100 text-emerald-600' : isCancelada ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+              isRealizada || isConvertida ? 'bg-emerald-100 text-emerald-600' : isCancelada ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
             }`}>
-              {isRealizada ? <CheckCircle2 size={16} /> : isCancelada ? <XCircle size={16} /> : <Handshake size={16} />}
+              {isRealizada || isConvertida ? <CheckCircle2 size={16} /> : isCancelada ? <XCircle size={16} /> : <Handshake size={16} />}
             </div>
             <div>
               <p className="text-sm font-bold text-slate-800">
@@ -357,7 +358,8 @@ function NegociacaoHistorico({ record }: { record: Record<string, any> }) {
               <p className="text-xs text-slate-500 mt-1">
                 {isRealizada && 'Negociação finalizada com sucesso! A proposta foi aceita entre as partes e pode originar o contrato definitivo.'}
                 {isCancelada && 'Negociação cancelada/descontinuada. Histórico preservado para fins de auditoria e métricas.'}
-                {!isRealizada && !isCancelada && 'Negociação em andamento e trâmites de aceite entre comprador/locatário e proprietário.'}
+                {isConvertida && 'Negociação concluída e convertida em contrato. Consulte o contrato vinculado no módulo Contratos.'}
+                {!isRealizada && !isCancelada && !isConvertida && 'Negociação em andamento e trâmites de aceite entre comprador/locatário e proprietário.'}
               </p>
             </div>
           </div>
@@ -380,18 +382,70 @@ export function NegociacaoPage({ mode }: { mode: Mode }) {
   const imoveis = useList('imoveis');
   const proprietarios = useList('proprietarios');
   const corretores = useList('funcionarios', { cargo: 'Corretor', status: 'Ativo' });
+  const visitas = useList('visitas');
 
-  if (clientes.loading || imoveis.loading || proprietarios.loading || corretores.loading) {
+  if (clientes.loading || imoveis.loading || proprietarios.loading || corretores.loading || visitas.loading) {
     return <p className="text-slate-400 p-8">Carregando...</p>;
   }
 
   const corretoresAtivos = corretores.rows.filter(c => c.status !== 'Inativo');
   const find = (list: any[], id: unknown) => list.find(x => String(x.id) === String(id));
 
+  // Ao escolher o imóvel (direto ou pela visita): sugere tipo, proprietário e valor
+  const aoSelecionarImovel = (imovelId: unknown, form: Record<string, any>) => {
+    const imv = find(imoveis.rows, imovelId);
+    if (imv) {
+      const tipoAuto = imv.finalidade === 'Aluguel' || imv.finalidade === 'Temporada' ? 'Locação' : 'Venda';
+      const valorSugerido = tipoAuto === 'Locação' ? (imv.precoAluguel || 0) : (imv.precoVenda || 0);
+      return {
+        ...form,
+        imovelId,
+        tipo: form.tipo || tipoAuto,
+        proprietarioId: imv.proprietarioId,
+        valorOriginal: valorSugerido,
+        // sugere o valor pedido se o usuário ainda não tiver preenchido
+        valor: form.valor ? form.valor : valorSugerido,
+      };
+    }
+  };
+
   const tabs: TabDef[] = [
     {
       label: 'Dados da Proposta',
       fields: [
+        {
+          key: 'visitaId',
+          label: 'Visita de Origem',
+          type: 'search-select',
+          full: true,
+          disabled: (_, m) => m === 'edit',
+          placeholder: 'Opcional: selecione a visita que originou a proposta',
+          options: visitas.rows
+            .filter(v => v.status !== 'Cancelada')
+            .map(v => ({
+              value: v.id,
+              label: `#${v.id} - ${v.clienteNome || `Cliente #${v.clienteId}`} · ${v.imovelTitulo || `Imóvel #${v.imovelId}`}`,
+              hint: [formatDate(v.data), v.hora, v.corretor, v.status].filter(Boolean).join(' · '),
+            })),
+          renderView: val => {
+            const v = find(visitas.rows, val);
+            return v ? `#${v.id} - ${formatDate(v.data)} ${v.hora || ''} · ${v.corretor || ''}` : '—';
+          },
+          // Puxa cliente, imóvel e corretor da visita selecionada
+          onChange: (visitaId, form) => {
+            const v = find(visitas.rows, visitaId);
+            if (!v) return { ...form, visitaId };
+            const corretorAtivo = corretoresAtivos.some(c => String(c.id) === String(v.corretorId));
+            const next = {
+              ...form,
+              visitaId,
+              clienteId: v.clienteId,
+              imovelId: v.imovelId,
+              corretorId: corretorAtivo ? v.corretorId : form.corretorId,
+            };
+            return aoSelecionarImovel(v.imovelId, next) || next;
+          },
+        },
         {
           key: 'clienteId',
           label: 'Cliente Interessado',
@@ -430,22 +484,7 @@ export function NegociacaoPage({ mode }: { mode: Mode }) {
             const im = imoveis.rows.find(i => String(i.id) === String(val));
             return im ? `#${im.id} - ${im.titulo}` : form.imovelTitulo || (val ? `Imóvel #${val}` : '—');
           },
-          onChange: (imovelId, form) => {
-            const imv = find(imoveis.rows, imovelId);
-            if (imv) {
-              const tipoAuto = imv.finalidade === 'Aluguel' || imv.finalidade === 'Temporada' ? 'Locação' : 'Venda';
-              const valorSugerido = tipoAuto === 'Locação' ? (imv.precoAluguel || 0) : (imv.precoVenda || 0);
-              return {
-                ...form,
-                imovelId,
-                tipo: form.tipo || tipoAuto,
-                proprietarioId: imv.proprietarioId,
-                valorOriginal: valorSugerido,
-                // sugere o valor pedido se o usuário ainda não tiver preenchido
-                valor: form.valor ? form.valor : valorSugerido,
-              };
-            }
-          },
+          onChange: aoSelecionarImovel,
         },
         {
           key: 'corretorId',
