@@ -495,7 +495,7 @@ export function FinanceiroList() {
                       e.stopPropagation();
                       setPagamentoModal(r);
                     }}
-                    className="save-action inline-flex items-center gap-1 px-2.5 py-1 text-white rounded-lg text-xs font-bold transition shadow-xs"
+                    className="inline-flex items-center gap-1 whitespace-nowrap text-emerald-700 hover:text-emerald-900 text-xs font-bold hover:underline"
                   >
                     <CheckCircle2 size={13} /> Dar Baixa
                   </button>
