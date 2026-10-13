@@ -9,6 +9,7 @@ import {
   Eye,
   FileSpreadsheet,
   FileText,
+  Handshake,
   Landmark,
   MapPin,
   Plus,
@@ -549,15 +550,131 @@ export function ContratoPage({ mode }: { mode: Mode }) {
   const imoveis = useList('imoveis');
   const proprietarios = useList('proprietarios');
   const corretores = useList('funcionarios', { cargo: 'Corretor', status: 'Ativo' });
+  const negociacoes = useList('negociacoes');
+  const contratos = useList('contratos');
 
-  if (clientes.loading || imoveis.loading || proprietarios.loading || corretores.loading) {
+  if (clientes.loading || imoveis.loading || proprietarios.loading || corretores.loading || negociacoes.loading || contratos.loading) {
     return <p className="text-slate-400 p-8">Carregando dados necessários...</p>;
   }
 
   const corretoresAtivos = corretores.rows.filter(c => c.status !== 'Inativo');
   const find = (list: any[], id: unknown) => list.find(x => String(x.id) === String(id));
 
+  // Ao escolher o imóvel (direto ou pela negociação): preenche proprietário, corretor, valores e taxas
+  const aoSelecionarImovel = (imovelId: unknown, form: Record<string, any>): Record<string, any> => {
+    const id = imovelId ? Number(imovelId) : null;
+    const sel = find(imoveis.rows, id);
+    if (sel) {
+      const tipoSugerido = (sel.finalidade === 'Aluguel' || sel.finalidade === 'Temporada') ? 'Locação' : 'Compra e Venda';
+      const valorSugerido = tipoSugerido === 'Locação' ? (sel.precoAluguel || 0) : (sel.precoVenda || 0);
+      const prop = find(proprietarios.rows, sel.proprietarioId);
+      const taxa = tipoSugerido === 'Locação' ? 10 : 6;
+      const repasse = valorSugerido - (valorSugerido * taxa / 100);
+      const corrAtivo = corretoresAtivos.find(c => String(c.id) === String(sel.responsavelId));
+      return {
+        ...form,
+        imovelId: id,
+        imovelTitulo: sel.titulo,
+        proprietarioId: sel.proprietarioId,
+        proprietarioNome: prop?.nome || null,
+        corretorId: corrAtivo ? corrAtivo.id : (corretoresAtivos.some(c => String(c.id) === String(form.corretorId)) ? form.corretorId : null),
+        tipo: form.tipo || tipoSugerido,
+        valor: form.valor || valorSugerido,
+        condominio: sel.condominio || 0,
+        iptu: sel.iptu || 0,
+        taxaAdministracao: form.taxaAdministracao || taxa,
+        repasseProprietario: repasse,
+      };
+    }
+    return {
+      ...form,
+      imovelId: null,
+    };
+  };
+
+  // Negociações que ainda podem evoluir para contrato (não canceladas e sem contrato vinculado)
+  const vinculadas = new Set(contratos.rows.map(c => c.negociacaoId).filter(Boolean).map(String));
+  const negociacoesDisponiveis = mode === 'create'
+    ? negociacoes.rows.filter(n => n.status !== 'Cancelada' && n.status !== 'Convertida em Contrato' && !vinculadas.has(String(n.id)))
+    : negociacoes.rows;
+  const TIPO_CONTRATO_POR_NEGOCIACAO: Record<string, string> = { Venda: 'Compra e Venda', 'Locação': 'Locação', Temporada: 'Temporada' };
+
   const tabs: TabDef[] = [
+    {
+      label: 'Negociação',
+      fields: [
+        {
+          key: 'negociacaoId',
+          label: 'Negociação que evolui para este contrato',
+          type: 'search-select',
+          full: true,
+          disabled: (_, m) => m === 'edit',
+          placeholder: 'Opcional: selecione a negociação de origem',
+          options: negociacoesDisponiveis.map(n => ({
+            value: n.id,
+            label: `#${n.id} - ${n.clienteNome || `Cliente #${n.clienteId}`} · ${n.imovelTitulo || `Imóvel #${n.imovelId}`}`,
+            hint: [n.tipo, formatCurrency(n.valor), n.corretor, n.status].filter(Boolean).join(' · '),
+          })),
+          renderView: val => {
+            const n = find(negociacoes.rows, val);
+            return n ? `#${n.id} - ${n.clienteNome || ''} · ${n.imovelTitulo || ''}` : 'Contrato sem negociação de origem';
+          },
+          // Puxa cliente, imóvel, corretor, tipo e valor acordado na negociação
+          onChange: (negociacaoId, form) => {
+            const n = find(negociacoes.rows, negociacaoId);
+            if (!n) return { ...form, negociacaoId };
+            const corretorAtivo = corretoresAtivos.some(c => String(c.id) === String(n.corretorId));
+            const preenchido = aoSelecionarImovel(n.imovelId, {
+              ...form,
+              negociacaoId,
+              clienteId: n.clienteId,
+              tipo: TIPO_CONTRATO_POR_NEGOCIACAO[n.tipo] || form.tipo,
+              valor: n.valor || form.valor,
+            });
+            const valor = Number(preenchido.valor || 0);
+            const taxa = Number(preenchido.taxaAdministracao || 0);
+            return {
+              ...preenchido,
+              corretorId: corretorAtivo ? n.corretorId : preenchido.corretorId,
+              repasseProprietario: valor - (valor * taxa / 100),
+            };
+          },
+        },
+      ],
+      render: form => {
+        const n = find(negociacoes.rows, form.negociacaoId);
+        if (!n) return null;
+        return (
+          <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center gap-2 mb-3 text-sky-800">
+              <Handshake size={18} />
+              <span className="text-xs font-bold uppercase tracking-wider">Dados da Negociação de Origem</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+              <div>
+                <span className="block text-[11px] font-semibold uppercase text-slate-400">Data da Proposta</span>
+                <span className="font-medium text-slate-700">{formatDate(n.data)}</span>
+              </div>
+              <div>
+                <span className="block text-[11px] font-semibold uppercase text-slate-400">Tipo</span>
+                <span className="font-medium text-slate-700">{n.tipo || '—'}</span>
+              </div>
+              <div>
+                <span className="block text-[11px] font-semibold uppercase text-slate-400">Valor Acordado</span>
+                <span className="font-bold text-slate-800">{formatCurrency(n.valor)}</span>
+              </div>
+              <div>
+                <span className="block text-[11px] font-semibold uppercase text-slate-400">Forma de Pagamento</span>
+                <span className="font-medium text-slate-700">{n.formaPagamento || '—'}</span>
+              </div>
+            </div>
+            {n.observacoes && (
+              <p className="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-600 whitespace-pre-wrap">{n.observacoes}</p>
+            )}
+          </div>
+        );
+      },
+    },
     {
       label: 'Dados do Contrato',
       fields: [
@@ -583,36 +700,7 @@ export function ContratoPage({ mode }: { mode: Mode }) {
             const im = imoveis.rows.find(i => String(i.id) === String(val));
             return im ? `#${im.id} - ${im.titulo}` : form.imovelTitulo || (val ? `Imóvel #${val}` : '—');
           },
-          onChange: (imovelId, form) => {
-            const id = imovelId ? Number(imovelId) : null;
-            const sel = find(imoveis.rows, id);
-            if (sel) {
-              const tipoSugerido = (sel.finalidade === 'Aluguel' || sel.finalidade === 'Temporada') ? 'Locação' : 'Compra e Venda';
-              const valorSugerido = tipoSugerido === 'Locação' ? (sel.precoAluguel || 0) : (sel.precoVenda || 0);
-              const prop = find(proprietarios.rows, sel.proprietarioId);
-              const taxa = tipoSugerido === 'Locação' ? 10 : 6;
-              const repasse = valorSugerido - (valorSugerido * taxa / 100);
-              const corrAtivo = corretoresAtivos.find(c => String(c.id) === String(sel.responsavelId));
-              return {
-                ...form,
-                imovelId: id,
-                imovelTitulo: sel.titulo,
-                proprietarioId: sel.proprietarioId,
-                proprietarioNome: prop?.nome || null,
-                corretorId: corrAtivo ? corrAtivo.id : (corretoresAtivos.some(c => String(c.id) === String(form.corretorId)) ? form.corretorId : null),
-                tipo: form.tipo || tipoSugerido,
-                valor: form.valor || valorSugerido,
-                condominio: sel.condominio || 0,
-                iptu: sel.iptu || 0,
-                taxaAdministracao: form.taxaAdministracao || taxa,
-                repasseProprietario: repasse,
-              };
-            }
-            return {
-              ...form,
-              imovelId: null,
-            };
-          },
+          onChange: aoSelecionarImovel,
         },
         {
           key: 'clienteId',

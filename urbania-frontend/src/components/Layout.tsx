@@ -61,7 +61,7 @@ const sections: NavSection[] = [
     { path: '/canais', label: 'Canais de Publicação', icon: <Radio size={18} /> },
   ] },
   { id: 'financeiro', title: 'Financeiro', collapsible: true, items: [
-    { path: '/financeiro', label: 'Lançamentos', icon: <DollarSign size={18} /> },
+    { path: '/financeiro', label: 'Pagamentos', icon: <DollarSign size={18} /> },
     { path: '/despesas', label: 'Despesas', icon: <Receipt size={18} /> },
     { path: '/multas', label: 'Multas', icon: <AlertTriangle size={18} /> },
   ] },

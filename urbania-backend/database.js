@@ -45,6 +45,7 @@ const schema = {
     clienteId: 'INTEGER', clienteNome: 'TEXT', imovelId: 'INTEGER', imovelTitulo: 'TEXT',
     proprietarioId: 'INTEGER', proprietarioNome: 'TEXT', corretorId: 'INTEGER', corretor: 'TEXT',
     tipo: 'TEXT', data: 'TEXT', valor: 'REAL', status: 'TEXT', formaPagamento: 'TEXT', observacoes: 'TEXT',
+    visitaId: 'INTEGER',
   },
   contratos: {
     clienteId: 'INTEGER', clienteNome: 'TEXT', imovelId: 'INTEGER', imovelTitulo: 'TEXT',
@@ -55,6 +56,7 @@ const schema = {
     formaPagamento: 'TEXT', taxaAdministracao: 'REAL', repasseProprietario: 'REAL',
     garantiaTipo: 'TEXT', garantiaValor: 'REAL', garantiaDetalhes: 'TEXT',
     indiceReajuste: 'TEXT', multaAtraso: 'REAL', multaRescisoria: 'TEXT', observacoes: 'TEXT',
+    negociacaoId: 'INTEGER',
   },
   perfis: { nome: 'TEXT', descricao: 'TEXT', permissoes: 'TEXT', status: 'TEXT', nativo: 'INTEGER' },
   notificacoes: {
@@ -83,6 +85,7 @@ const schema = {
     descricao: 'TEXT', valor: 'REAL', dataVencimento: 'TEXT', dataPagamento: 'TEXT',
     status: 'TEXT', categoria: 'TEXT', imovelId: 'INTEGER', imovelTitulo: 'TEXT',
     formaPagamento: 'TEXT', observacoes: 'TEXT', comprovante: 'TEXT', historicoStatus: 'TEXT',
+    reparoId: 'INTEGER',
   },
   multas: {
     contratoId: 'INTEGER', clienteId: 'INTEGER', clienteNome: 'TEXT',

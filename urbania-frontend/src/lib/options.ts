@@ -13,7 +13,7 @@ export const TIPOS_CONTA = ['Corrente', 'Poupança'];
 export const SEXOS = ['Masculino', 'Feminino', 'Outro'];
 export const ESTADOS_CIVIS = ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'];
 export const STATUS_VISITA = ['Pendente', 'Confirmada', 'Realizada', 'Cancelada'];
-export const STATUS_NEGOCIACAO = ['Em Andamento', 'Realizada', 'Cancelada'];
+export const STATUS_NEGOCIACAO = ['Em Andamento', 'Realizada', 'Convertida em Contrato', 'Cancelada'];
 export const TIPOS_NEGOCIACAO = ['Venda', 'Locação', 'Temporada'];
 export const FORMAS_PAGAMENTO = [
   'À Vista (PIX / Transferência)',
@@ -55,6 +55,7 @@ export const statusColor = (status: unknown) => ({
   Despesa: 'bg-rose-100 text-rose-700',
   Repasse: 'bg-sky-100 text-sky-700',
   Contestado: 'bg-orange-100 text-orange-700',
+  'Convertida em Contrato': 'bg-violet-100 text-violet-700',
 }[String(status)] || 'bg-slate-100 text-slate-600');
 
 // Notificações e Automações (RF F13-F16)

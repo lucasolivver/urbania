@@ -201,6 +201,49 @@ const validarFuncionarioAtivo = async (table, data) => {
   return null;
 };
 
+// Integrações automáticas entre módulos, executadas após gravar um registro
+const aposSalvar = async (table, id, req) => {
+  // Reparo com orçamento gera/atualiza a despesa correspondente no caixa (enquanto ela não estiver paga)
+  if (table === 'reparos') {
+    const reparo = await get('SELECT * FROM reparos WHERE id = ?', [id]);
+    if (!reparo || !(Number(reparo.valor) > 0)) return;
+    const servico = await get('SELECT nome FROM servicos WHERE id = ?', [reparo.servicoId]);
+    const prestador = await get('SELECT nome FROM prestadores WHERE id = ?', [reparo.prestadorId]);
+    const imovel = await get('SELECT titulo FROM imoveis WHERE id = ?', [reparo.imovelId]);
+    const descricao = `Reparo #${id} - ${servico?.nome || 'Manutenção'}${prestador ? ` (${prestador.nome})` : ''}`;
+    const despesa = await get('SELECT id, status FROM despesas WHERE reparoId = ?', [id]);
+
+    if (!despesa) {
+      const r = await run(
+        `INSERT INTO despesas (descricao, valor, dataVencimento, status, categoria, imovelId, imovelTitulo, observacoes, reparoId)
+         VALUES (?, ?, ?, 'Pendente', 'Manutenção de imóveis sob gestão', ?, ?, ?, ?)`,
+        [descricao, reparo.valor, reparo.dataSolicitacao || new Date().toISOString().slice(0, 10),
+          reparo.imovelId, imovel?.titulo || null, `Gerada automaticamente a partir do Reparo #${id}.`, id]
+      );
+      logAudit(quem(req), 'Criação', 'despesas', r.lastID, JSON.stringify({
+        tipo: 'criacao', resumo: `Despesa #${r.lastID} gerada automaticamente pelo Reparo #${id}`,
+        campos: [{ campo: 'descricao', valor: descricao }, { campo: 'valor', valor: reparo.valor }],
+      }), req);
+    } else if (despesa.status !== 'Pago') {
+      await run('UPDATE despesas SET descricao = ?, valor = ?, imovelId = ?, imovelTitulo = ? WHERE id = ?',
+        [descricao, reparo.valor, reparo.imovelId, imovel?.titulo || null, despesa.id]);
+    }
+  }
+
+  // Contrato originado de uma negociação: a negociação passa a "Convertida em Contrato"
+  if (table === 'contratos') {
+    const contrato = await get('SELECT negociacaoId FROM contratos WHERE id = ?', [id]);
+    if (!contrato?.negociacaoId) return;
+    const r = await run("UPDATE negociacoes SET status = 'Convertida em Contrato' WHERE id = ? AND status != 'Convertida em Contrato'", [contrato.negociacaoId]);
+    if (r.changes) {
+      logAudit(quem(req), 'Alteração', 'negociacoes', contrato.negociacaoId, JSON.stringify({
+        tipo: 'alteracao', resumo: `Negociação convertida no Contrato #${id}`,
+        mudancas: [{ campo: 'status', de: null, para: 'Convertida em Contrato' }],
+      }), req);
+    }
+  }
+};
+
 tables.forEach(table => {
   // Cada método exige a ação correspondente no perfil (GET=Visualizar, POST=Criar, PUT=Editar, DELETE=Excluir)
   app.use(`/api/${table}`, autorizar(table));
@@ -252,9 +295,10 @@ tables.forEach(table => {
 
     const sql = `INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`;
 
-    db.run(sql, Object.values(data), function(err) {
+    db.run(sql, Object.values(data), async function(err) {
       if (err) return res.status(500).json({ error: err.message });
       const newId = this.lastID;
+      try { await aposSalvar(table, newId, req); } catch (e) { console.error(e.message); }
 
       const camposCadastrados = Object.entries(data)
         .filter(([k, v]) => v !== null && v !== undefined && v !== '' && k !== 'senha' && k !== 'foto' && k !== 'fotos')
@@ -291,8 +335,9 @@ tables.forEach(table => {
 
     const sql = `UPDATE ${table} SET ${keys.map(k => `${k}=?`).join(',')} WHERE id=?`;
 
-    db.run(sql, [...Object.values(data), req.params.id], function(err) {
+    db.run(sql, [...Object.values(data), req.params.id], async function(err) {
       if (err) return res.status(500).json({ error: err.message });
+      try { await aposSalvar(table, Number(req.params.id), req); } catch (e) { console.error(e.message); }
 
       const mudancas = [];
       if (registroAnterior) {
