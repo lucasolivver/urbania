@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Loader2, Plus } from 'lucide-react';
 import { api } from '../api';
-import { Card, DataTable, FilterSelect, PageHeader, RowActions, Toolbar } from '../components/DataTable';
+import { Card, DataTable, PageHeader, RowActions, Toolbar } from '../components/DataTable';
 import type { Mode, TabDef } from '../components/EntityForm';
 import { EntityPage } from '../components/EntityPage';
 import { useFieldSearch } from '../components/FieldSearch';
@@ -18,16 +18,16 @@ import { Pode } from '../lib/auth';
 export function ServicosList() {
   const navigate = useNavigate();
   const { rows, loading, reload } = useList('servicos');
-  const [categoria, setCategoria] = useState('');
   const del = useDelete('servicos', 'Serviço', reload);
+  // Combobox de campo (Nome / Categoria, conforme o requisito) + busca; a categoria não tem um filtro à parte
+  // para não haver dois filtros sobre a mesma informação
   const search = useFieldSearch<any>([
     { value: 'nome', label: 'Nome', get: s => s.nome },
     { value: 'categoria', label: 'Categoria', get: s => s.categoria },
+    { value: 'descricao', label: 'Descrição', get: s => s.descricao },
   ]);
 
-  const filtered = rows
-    .filter(s => search.filter(s) && (!categoria || s.categoria === categoria))
-    .sort((a, b) => a.id - b.id);
+  const filtered = rows.filter(search.filter).sort((a, b) => a.id - b.id);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -36,10 +36,7 @@ export function ServicosList() {
         action={<Pode acao="Criar"><button onClick={() => navigate('/servicos/novo')} className="flex items-center gap-2 bg-[#0a2540] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#06182c]"><Plus size={18} /> Cadastrar Serviço</button></Pode>}
       />
       <Card>
-        <Toolbar>
-          {search.controls}
-          <FilterSelect value={categoria} onChange={setCategoria} options={CATEGORIAS_SERVICO} placeholder="Todas as categorias" />
-        </Toolbar>
+        <Toolbar>{search.controls}</Toolbar>
         <DataTable
           rows={filtered} loading={loading}
           onRowClick={r => navigate(`/servicos/${r.id}`)}
