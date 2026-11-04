@@ -31,6 +31,7 @@ import {
   statusColor,
 } from '../lib/options';
 import { Pode } from '../lib/auth';
+import { DatePicker } from '../components/DateTimePicker';
 
 // Cálculo automático de status conforme RF F1 NF 1.5
 export function calcularStatusDespesa(dataVencimento?: string, dataPagamento?: string): string {
@@ -292,11 +293,11 @@ export function DespesasList() {
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                   Data de Pagamento *
                 </label>
-                <input
-                  type="date"
+                <DatePicker
+                  aria-label="Data de Pagamento"
                   value={dataPagamentoBaixa}
-                  onChange={e => setDataPagamentoBaixa(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#0a2540]"
+                  onChange={v => setDataPagamentoBaixa(v || '')}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
                 />
               </div>
 

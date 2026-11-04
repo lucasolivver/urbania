@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useCampoDeBusca } from './DataTable';
-
-const MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
+import { MesAnoSeletor } from './DateTimePicker';
 
 const DIAS_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -314,8 +310,6 @@ export function DateRangeFilter({
   const nextMonth = () => setViewDate(new Date(currentYear, currentMonth + 1, 1));
 
   const calendarDays = buildCalendarDays(currentYear, currentMonth);
-  const baseYear = new Date().getFullYear();
-  const anosDisponiveis = Array.from({ length: 15 }, (_, i) => baseYear - 7 + i);
 
   const todayStr = (() => {
     const d = new Date();
@@ -506,27 +500,8 @@ export function DateRangeFilter({
               <ChevronLeft size={17} />
             </button>
 
-            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
-              <select
-                value={currentMonth}
-                onChange={e => setViewDate(new Date(currentYear, Number(e.target.value), 1))}
-                className="bg-transparent font-bold cursor-pointer outline-none hover:text-sky-600 text-slate-800 py-0.5"
-              >
-                {MESES.map((m, idx) => (
-                  <option key={m} value={idx}>{m}</option>
-                ))}
-              </select>
-
-              <select
-                value={currentYear}
-                onChange={e => setViewDate(new Date(Number(e.target.value), currentMonth, 1))}
-                className="bg-transparent font-bold cursor-pointer outline-none hover:text-sky-600 text-slate-800 py-0.5"
-              >
-                {anosDisponiveis.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+            {/* Mês/ano no visual do sistema (em vez das listas nativas do navegador) */}
+            <MesAnoSeletor ano={currentYear} mes={currentMonth} onChange={(a, m) => setViewDate(new Date(a, m, 1))} />
 
             <button
               type="button"
@@ -765,8 +740,6 @@ export function DateInput({
   })();
 
   const ativo = Boolean(valor);
-  const baseYear = new Date().getFullYear();
-  const anosDisponiveis = Array.from({ length: 15 }, (_, i) => baseYear - 7 + i);
 
   return (
     <div ref={containerRef} className={`relative inline-block w-full sm:w-auto ${className}`}>
@@ -830,27 +803,8 @@ export function DateInput({
               <ChevronLeft size={17} />
             </button>
 
-            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
-              <select
-                value={currentMonth}
-                onChange={e => setViewDate(new Date(currentYear, Number(e.target.value), 1))}
-                className="bg-transparent font-bold cursor-pointer outline-none hover:text-sky-600 text-slate-800 py-0.5"
-              >
-                {MESES.map((m, idx) => (
-                  <option key={m} value={idx}>{m}</option>
-                ))}
-              </select>
-
-              <select
-                value={currentYear}
-                onChange={e => setViewDate(new Date(Number(e.target.value), currentMonth, 1))}
-                className="bg-transparent font-bold cursor-pointer outline-none hover:text-sky-600 text-slate-800 py-0.5"
-              >
-                {anosDisponiveis.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+            {/* Mês/ano no visual do sistema (em vez das listas nativas do navegador) */}
+            <MesAnoSeletor ano={currentYear} mes={currentMonth} onChange={(a, m) => setViewDate(new Date(a, m, 1))} />
 
             <button
               type="button"

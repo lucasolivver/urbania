@@ -31,6 +31,7 @@ import { useExportarPlanilha } from '../lib/exportExcel';
 import { useConfig } from '../lib/config';
 import { dadosEmpresa, contatoEmpresa, nomeEmpresa } from '../lib/identidade';
 import logoPadrao from '../assets/logo.png';
+import { DatePicker } from '../components/DateTimePicker';
 
 // Dados da exportação nativa para Excel (RNF 1.3 - pág. 32); a planilha sai com a identidade da imobiliária
 function planilhaFinanceiro(data: any[]) {
@@ -228,11 +229,11 @@ function EfetuarPagamentoModal({
             <label className="block font-semibold uppercase text-slate-600 mb-1">
               Data da Baixa / Pagamento
             </label>
-            <input
-              type="date"
+            <DatePicker
+              aria-label="Data da Baixa / Pagamento"
               value={dataPag}
-              onChange={e => setDataPag(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#0a2540] bg-white text-xs"
+              onChange={v => setDataPag(v || '')}
+              className="w-full px-3 py-2 border rounded-lg bg-white text-xs"
             />
           </div>
 
