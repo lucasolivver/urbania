@@ -26,34 +26,27 @@ import { formatCurrency, formatDate, fullAddress, todayISO } from '../lib/format
 import { FORMAS_PAGAMENTO, STATUS_NEGOCIACAO, TIPOS_NEGOCIACAO, statusColor } from '../lib/options';
 import { StatusDropdown } from '../components/StatusDropdown';
 import { Pode } from '../lib/auth';
+import { useExportarPlanilha } from '../lib/exportExcel';
 
 
 
-// Exportação nativa para CSV / Excel (RNF 1.3 - pág. 32)
-function exportToCsv(data: any[], filename: string) {
+// Dados da exportação nativa para Excel (RNF 1.3 - pág. 32); a planilha sai com a identidade da imobiliária
+function planilhaNegociacoes(data: any[]) {
   const headers = ['ID Proposta', 'Data', 'Cliente', 'Imóvel', 'Corretor', 'Tipo', 'Valor Proposto (R$)', 'Status', 'Forma de Pagamento', 'Observações'];
   const rows = data.map(n => [
     n.id,
     n.data || '',
-    `"${(n.clienteNome || '').replace(/"/g, '""')}"`,
-    `"${(n.imovelTitulo || '').replace(/"/g, '""')}"`,
-    `"${(n.corretor || '').replace(/"/g, '""')}"`,
+    n.clienteNome || '',
+    n.imovelTitulo || '',
+    n.corretor || '',
     n.tipo || '',
-    n.valor ? Number(n.valor).toFixed(2) : '0.00',
+    Number(n.valor || 0),
     n.status || '',
-    `"${(n.formaPagamento || '').replace(/"/g, '""')}"`,
-    `"${(n.observacoes || '').replace(/"/g, '""')}"`,
+    n.formaPagamento || '',
+    n.observacoes || '',
   ]);
 
-  const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  return { headers, rows };
 }
 
 // Consultar Negociações (Padrão de Consulta Urbânia com RFs e RNFs de Propostas/Negociações)
@@ -113,14 +106,16 @@ export function NegociacoesList() {
     }
   };
 
+  const exportarPlanilha = useExportarPlanilha();
   const handleExport = () => {
     if (!filtered.length) {
       toast.error('Nenhum registro para exportar.');
       return;
     }
     const dataHora = new Date().toISOString().slice(0, 10);
-    exportToCsv(filtered, `urbania_negociacoes_${dataHora}`);
-    toast.success('Histórico de negociações exportado com sucesso (.csv / Excel).');
+    const { headers, rows: linhas } = planilhaNegociacoes(filtered);
+    exportarPlanilha('Histórico de Negociações', headers, linhas, `urbania_negociacoes_${dataHora}`);
+    toast.success('Histórico de negociações exportado com sucesso em planilha Excel (.xlsx).');
   };
 
   const empty = (
@@ -155,7 +150,7 @@ export function NegociacoesList() {
               title="Exportar histórico nativo para Excel/PDF (RNF 1.3)"
               className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition shadow-sm text-sm"
             >
-              <FileSpreadsheet size={16} className="text-emerald-600" /> Exportar (.xlsx/CSV)
+              <FileSpreadsheet size={16} className="text-emerald-600" /> Exportar (.xlsx)
             </button>
             <Pode acao="Criar"><button
               onClick={() => navigate('/negociacoes/novo')}

@@ -37,6 +37,7 @@ import { moduloDaRota } from '../lib/permissoes';
 import { useTema } from '../lib/theme';
 import { NotificationsMenu } from './HeaderMenus';
 import { CommandPalette } from './CommandPalette';
+import { CabecalhoRelatorio, RodapeRelatorio } from './CabecalhoRelatorio';
 import logoImg from '../assets/logo.png';
 
 type NavItem = { path: string; label: string; icon: ReactNode };
@@ -345,7 +346,10 @@ export default function Layout({ children }: { children: ReactNode }) {
 
         {/* PAGE CONTENT */}
         <div className="px-4 md:px-8 pb-6 pt-4">
+          {/* Identidade da imobiliária no topo e no fim de toda impressão / PDF */}
+          <CabecalhoRelatorio titulo={currentModule?.label} />
           {children}
+          <RodapeRelatorio />
         </div>
       </main>
     </div>

@@ -11,7 +11,7 @@ import { Badge, Card, DataTable, DateRangeFilter, FilterSelect, PageHeader, Sear
 import { useToast } from '../components/Toast';
 import { useList } from '../lib/useApi';
 import { formatDate } from '../lib/format';
-import { exportGridToXlsx } from '../lib/exportExcel';
+import { useExportarPlanilha } from '../lib/exportExcel';
 
 
 const ACOES_AUDITORIA = [
@@ -22,6 +22,7 @@ const ACOES_AUDITORIA = [
 
 export default function Auditoria() {
   const toast = useToast();
+  const exportarPlanilha = useExportarPlanilha();
   const auditoria = useList('auditoria');
 
   const [term, setTerm] = useState('');
@@ -277,7 +278,7 @@ export default function Auditoria() {
       formatDetalhesTexto(a.detalhes, a),
       a.acao || a.entidade || '',
     ]);
-    exportGridToXlsx(headers, rows, `urbania_auditoria_${dataHora}`);
+    exportarPlanilha('Relatório de Auditoria (Log do Sistema)', headers, rows, `urbania_auditoria_${dataHora}`);
     toast.success('Auditoria exportada com sucesso em planilha Excel (.xlsx).');
   };
 

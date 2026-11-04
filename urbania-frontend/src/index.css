@@ -366,6 +366,12 @@
     border-radius: 4px !important;
   }
 
+  /* 7.1 "Imprimir Recibo": só o comprovante sai no papel (some a lista por trás do modal e o cabeçalho geral,
+     já que o recibo tem a própria identidade da imobiliária) */
+  body.imprimindo-recibo *:not(:has(#recibo-imprimir)):not(#recibo-imprimir):not(#recibo-imprimir *) {
+    display: none !important;
+  }
+
   /* 8. SUPRESSÃO PRIORITÁRIA DE FILTROS, BUSCAS E ELEMENTOS NÃO IMPRIMÍVEIS */
   .no-print,
   .no-print *,
