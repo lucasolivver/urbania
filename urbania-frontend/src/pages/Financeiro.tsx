@@ -330,7 +330,7 @@ export function FinanceiroList() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <PageHeader
-        title="Gestão Financeira & Caixa"
+        title="Fluxo de Caixa"
         subtitle={`${rows.length} operações cadastradas`}
         action={
           <div className="flex flex-wrap items-center gap-2">
