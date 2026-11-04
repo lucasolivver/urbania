@@ -38,10 +38,11 @@ import {
 import { StatusDropdown } from '../components/StatusDropdown';
 import { enderecoCurto } from './Imoveis';
 import { Pode } from '../lib/auth';
+import { useExportarPlanilha } from '../lib/exportExcel';
 
 
-// Exportação nativa para CSV / Excel (RNF 1.3 - pág. 32)
-function exportContratosToCsv(data: any[], filename: string) {
+// Dados da exportação nativa para Excel (RNF 1.3 - pág. 32); a planilha sai com a identidade da imobiliária
+function planilhaContratos(data: any[]) {
   const headers = [
     'ID Contrato',
     'Tipo',
@@ -70,35 +71,27 @@ function exportContratosToCsv(data: any[], filename: string) {
     c.id,
     c.tipo || '',
     c.status || '',
-    `"${(c.clienteNome || '').replace(/"/g, '""')}"`,
-    `"${(c.imovelTitulo || '').replace(/"/g, '""')}"`,
-    `"${(c.proprietarioNome || '').replace(/"/g, '""')}"`,
-    `"${(c.corretor || '').replace(/"/g, '""')}"`,
+    c.clienteNome || '',
+    c.imovelTitulo || '',
+    c.proprietarioNome || '',
+    c.corretor || '',
     c.dataInicio || '',
     c.dataFim || '',
     c.dataAssinatura || '',
-    c.valor ? Number(c.valor).toFixed(2) : '0.00',
-    c.condominio ? Number(c.condominio).toFixed(2) : '0.00',
-    c.iptu ? Number(c.iptu).toFixed(2) : '0.00',
+    Number(c.valor || 0),
+    Number(c.condominio || 0),
+    Number(c.iptu || 0),
     c.diaVencimento || '',
-    `"${(c.formaPagamento || '').replace(/"/g, '""')}"`,
-    c.taxaAdministracao ? Number(c.taxaAdministracao).toFixed(2) : '0.00',
-    c.repasseProprietario ? Number(c.repasseProprietario).toFixed(2) : '0.00',
-    `"${(c.garantiaTipo || '').replace(/"/g, '""')}"`,
-    c.garantiaValor ? Number(c.garantiaValor).toFixed(2) : '0.00',
-    `"${(c.indiceReajuste || '').replace(/"/g, '""')}"`,
-    `"${(c.observacoes || '').replace(/"/g, '""')}"`,
+    c.formaPagamento || '',
+    Number(c.taxaAdministracao || 0),
+    Number(c.repasseProprietario || 0),
+    c.garantiaTipo || '',
+    Number(c.garantiaValor || 0),
+    c.indiceReajuste || '',
+    c.observacoes || '',
   ]);
 
-  const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  return { headers, rows };
 }
 
 
@@ -184,14 +177,16 @@ export function ContratosList() {
     }
   };
 
+  const exportarPlanilha = useExportarPlanilha();
   const handleExport = () => {
     if (!filtered.length) {
       toast.error('Nenhum contrato para exportar.');
       return;
     }
     const dataHora = new Date().toISOString().slice(0, 10);
-    exportContratosToCsv(filtered, `urbania_contratos_${dataHora}`);
-    toast.success('Lista de contratos exportada com sucesso (.csv / Excel).');
+    const { headers, rows: linhas } = planilhaContratos(filtered);
+    exportarPlanilha('Relatório de Contratos', headers, linhas, `urbania_contratos_${dataHora}`);
+    toast.success('Lista de contratos exportada com sucesso em planilha Excel (.xlsx).');
   };
 
   const ativosCount = rows.filter(r => r.status === 'Ativo').length;
@@ -226,7 +221,7 @@ export function ContratosList() {
               title="Exportar contratos para Excel/CSV (RNF 1.3)"
               className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition shadow-sm text-sm"
             >
-              <FileSpreadsheet size={16} className="text-emerald-600" /> Exportar (.xlsx/CSV)
+              <FileSpreadsheet size={16} className="text-emerald-600" /> Exportar (.xlsx)
             </button>
             <Pode acao="Criar"><button
               onClick={() => navigate('/contratos/novo')}

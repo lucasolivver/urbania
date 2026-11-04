@@ -14,11 +14,12 @@ import { formatCurrency, formatDate } from '../lib/format';
 import { statusColor } from '../lib/options';
 
 type ReportTab = 'propostas' | 'intervencoes' | 'financeiro' | 'relacionamentos';
-import { exportGridToXlsx } from '../lib/exportExcel';
+import { useExportarPlanilha } from '../lib/exportExcel';
 
 
 export default function Relatorios() {
   const toast = useToast();
+  const exportarPlanilha = useExportarPlanilha();
   const [tab, setTab] = useState<ReportTab>('propostas');
 
   // Filtros Globais (RNF 1.2: filtros por período e por Usuário Responsável)
@@ -74,22 +75,22 @@ export default function Relatorios() {
     if (tab === 'propostas') {
       const headers = ['ID Proposta', 'Data', 'Cliente', 'Imóvel', 'Corretor', 'Tipo', 'Valor Proposto', 'Status', 'Forma Pagamento'];
       const rows = filteredPropostas.map(p => [p.id, p.data, p.clienteNome, p.imovelTitulo, p.corretor, p.tipo, p.valor, p.status, p.formaPagamento]);
-      exportGridToXlsx(headers, rows, `urbania_relatorio_propostas_${dataHora}`);
+      exportarPlanilha('Relatório - Histórico de Propostas', headers, rows, `urbania_relatorio_propostas_${dataHora}`);
     } else if (tab === 'intervencoes') {
       const headers = ['ID Reparo', 'Data Solicitação', 'Imóvel #', 'Responsável', 'Orçamento (R$)', 'Status', 'Problemas'];
       const rows = filteredReparos.map(r => [r.id, r.dataSolicitacao, r.imovelId, r.responsavel, r.valor, r.status, r.descricao]);
-      exportGridToXlsx(headers, rows, `urbania_relatorio_intervencoes_${dataHora}`);
+      exportarPlanilha('Relatório - Intervenções & Reparos', headers, rows, `urbania_relatorio_intervencoes_${dataHora}`);
     } else if (tab === 'financeiro') {
       const headers = ['ID', 'Tipo', 'Categoria', 'Descrição', 'Valor (R$)', 'Vencimento', 'Pagamento', 'Status', 'Recibo'];
       const rows = filteredFinanceiro.map(f => [f.id, f.tipo, f.categoria, f.descricao, f.valor, f.dataVencimento, f.dataPagamento, f.status, f.reciboNumero]);
-      exportGridToXlsx(headers, rows, `urbania_relatorio_financeiro_${dataHora}`);
+      exportarPlanilha('Relatório - Extrato & Repasses', headers, rows, `urbania_relatorio_financeiro_${dataHora}`);
     } else if (tab === 'relacionamentos') {
       const headers = ['ID Imóvel', 'Título', 'Tipo', 'Finalidade', 'Proprietário Legal', 'Corretor Captador', 'Preço Venda', 'Preço Aluguel'];
       const rows = filteredRelacionamentos.map(i => {
         const prop = proprietarios.rows.find(p => p.id === i.proprietarioId);
         return [i.id, i.titulo, i.tipo, i.finalidade, prop?.nome || '—', i.responsavel || '—', i.precoVenda, i.precoAluguel];
       });
-      exportGridToXlsx(headers, rows, `urbania_relatorio_vinculos_${dataHora}`);
+      exportarPlanilha('Relatório - Vínculos de Imóveis', headers, rows, `urbania_relatorio_vinculos_${dataHora}`);
     }
     toast.success('Relatório exportado com sucesso em planilha Excel (.xlsx).');
   };

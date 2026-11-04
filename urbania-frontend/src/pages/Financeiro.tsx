@@ -27,9 +27,13 @@ import {
   statusColor,
 } from '../lib/options';
 import { Pode, usePodeNaRota } from '../lib/auth';
+import { useExportarPlanilha } from '../lib/exportExcel';
+import { useConfig } from '../lib/config';
+import { dadosEmpresa, contatoEmpresa, nomeEmpresa } from '../lib/identidade';
+import logoPadrao from '../assets/logo.png';
 
-// Exportação nativa para CSV / Excel (RNF 1.3 - pág. 32)
-function exportFinanceiroToCsv(data: any[], filename: string) {
+// Dados da exportação nativa para Excel (RNF 1.3 - pág. 32); a planilha sai com a identidade da imobiliária
+function planilhaFinanceiro(data: any[]) {
   const headers = [
     'ID Lançamento',
     'Tipo',
@@ -52,30 +56,29 @@ function exportFinanceiroToCsv(data: any[], filename: string) {
     f.id,
     f.tipo || '',
     f.categoria || '',
-    `"${(f.descricao || '').replace(/"/g, '""')}"`,
-    f.valor ? Number(f.valor).toFixed(2) : '0.00',
+    f.descricao || '',
+    Number(f.valor || 0),
     f.dataVencimento || '',
     f.dataPagamento || '',
     f.status || '',
-    `"${(f.formaPagamento || '').replace(/"/g, '""')}"`,
-    `"${(f.clienteNome || '').replace(/"/g, '""')}"`,
-    `"${(f.proprietarioNome || '').replace(/"/g, '""')}"`,
-    `"${(f.imovelTitulo || '').replace(/"/g, '""')}"`,
+    f.formaPagamento || '',
+    f.clienteNome || '',
+    f.proprietarioNome || '',
+    f.imovelTitulo || '',
     f.contratoId || '',
     f.reciboNumero || '',
-    `"${(f.observacoes || '').replace(/"/g, '""')}"`,
+    f.observacoes || '',
   ]);
 
-  const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  return { headers, rows };
 }
+
+// Imprime só o comprovante (sem a lista por trás do modal); ver .imprimindo-recibo no index.css
+const imprimirRecibo = () => {
+  document.body.classList.add('imprimindo-recibo');
+  window.addEventListener('afterprint', () => document.body.classList.remove('imprimindo-recibo'), { once: true });
+  window.print();
+};
 
 // Modal de Baixa & Efetuar Pagamento com Gateway Seguro e Emissão de Recibo (RF F72 - pág. 32)
 function EfetuarPagamentoModal({
@@ -88,10 +91,12 @@ function EfetuarPagamentoModal({
   onClose: () => void;
 }) {
   const toast = useToast();
+  const { config } = useConfig();
   const [forma, setForma] = useState(lancamento.formaPagamento || 'PIX');
   const [dataPag, setDataPag] = useState(todayISO());
   const [processing, setProcessing] = useState(false);
-  const [recibo, setRecibo] = useState<any | null>(null);
+  // Lançamento já pago (botão "Ver Recibo") abre direto no comprovante
+  const [recibo, setRecibo] = useState<any | null>(lancamento.status === 'Pago' ? lancamento : null);
 
   const handleProcessar = async () => {
     setProcessing(true);
@@ -124,9 +129,17 @@ function EfetuarPagamentoModal({
       <Modal title="Comprovante de Pagamento" onClose={onClose} wide>
         <div className="p-4 space-y-6">
           <div className="p-6 bg-white border border-slate-200 rounded-2xl shadow-xs print:border-none print:shadow-none" id="recibo-imprimir">
+            {/* Identidade da imobiliária (Configurações), a mesma dos demais relatórios */}
+            <div className="flex items-center gap-3 pb-3 mb-4 border-b-[3px] border-[#0a2540]">
+              <img src={config.logo || logoPadrao} alt="" className="w-11 h-11 object-contain" />
+              <div>
+                <div className="text-base font-extrabold text-[#0a2540] leading-tight">{nomeEmpresa(config)}</div>
+                {dadosEmpresa(config) && <div className="text-[11px] text-slate-500">{dadosEmpresa(config)}</div>}
+                {contatoEmpresa(config) && <div className="text-[11px] text-slate-500">{contatoEmpresa(config)}</div>}
+              </div>
+            </div>
             <div className="flex justify-between items-start border-b pb-4 mb-4">
               <div>
-                <span className="text-xs font-bold text-sky-600 uppercase tracking-widest">Urbânia Gestão Imobiliária</span>
                 <h2 className="text-xl font-bold text-slate-800">Recibo / Comprovante Oficial</h2>
                 <p className="text-xs text-slate-400">Autenticação: {recibo.reciboNumero}</p>
               </div>
@@ -180,7 +193,7 @@ function EfetuarPagamentoModal({
           <div className="no-print flex justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={imprimirRecibo}
               className="flex items-center gap-1.5 px-4 py-2 border rounded-lg font-semibold text-xs text-slate-700 hover:bg-slate-50 transition"
             >
               <Printer size={15} /> Imprimir Recibo
@@ -300,14 +313,16 @@ export function FinanceiroList() {
     })
     .filter(r => matches(term, r.descricao, r.categoria, r.clienteNome, r.proprietarioNome, r.imovelTitulo, r.reciboNumero, r.id));
 
+  const exportarPlanilha = useExportarPlanilha();
   const handleExport = () => {
     if (!filtered.length) {
       toast.error('Nenhum registro para exportar.');
       return;
     }
     const dataHora = new Date().toISOString().slice(0, 10);
-    exportFinanceiroToCsv(filtered, `urbania_financeiro_${dataHora}`);
-    toast.success('Extrato financeiro exportado com sucesso (.csv / Excel).');
+    const { headers, rows: linhas } = planilhaFinanceiro(filtered);
+    exportarPlanilha('Extrato Financeiro', headers, linhas, `urbania_financeiro_${dataHora}`);
+    toast.success('Extrato financeiro exportado com sucesso em planilha Excel (.xlsx).');
   };
 
 
@@ -337,7 +352,7 @@ export function FinanceiroList() {
               title="Exportar para Excel/CSV (RNF 1.3)"
               className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition shadow-sm text-sm"
             >
-              <FileSpreadsheet size={16} className="text-emerald-600" /> Exportar (.xlsx/CSV)
+              <FileSpreadsheet size={16} className="text-emerald-600" /> Exportar (.xlsx)
             </button>
             <Pode acao="Criar"><button
               onClick={() => navigate('/financeiro/novo')}
