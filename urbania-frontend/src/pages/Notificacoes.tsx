@@ -106,7 +106,7 @@ export function NotificacoesList() {
       />
 
       <Card>
-        <Toolbar>
+        <Toolbar automatico>
           <SearchInput
             value={term}
             onChange={setTerm}

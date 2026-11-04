@@ -5,6 +5,8 @@ export type SearchField<T> = { value: string; label: string; get: (row: T) => un
 
 // "a, b ou c"
 const listar = (itens: string[]) => (itens.length > 1 ? `${itens.slice(0, -1).join(', ')} ou ${itens[itens.length - 1]}` : itens[0] ?? '');
+// Rótulo no meio da frase: minúsculo, mas siglas continuam em maiúsculas (CPF, CEP...)
+const minusculo = (label: string) => (label === label.toUpperCase() ? label : label.toLowerCase());
 
 // ComboBox que escolhe o campo + busca aplicada sobre ele
 export function useFieldSearch<T>(fields: SearchField<T>[]) {
@@ -24,8 +26,8 @@ export function useFieldSearch<T>(fields: SearchField<T>[]) {
 
   const selectedField = fields.find(f => f.value === campoEscolhido);
   const placeholder = selectedField
-    ? `Buscar por ${selectedField.label.toLowerCase()}...`
-    : `Buscar por ${listar(fields.map(f => f.label.toLowerCase()))}...`;
+    ? `Buscar por ${minusculo(selectedField.label)}...`
+    : `Buscar por ${listar(fields.map(f => minusculo(f.label)))}...`;
 
   const controls = (
     <>
