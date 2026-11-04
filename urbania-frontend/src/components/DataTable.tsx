@@ -253,10 +253,12 @@ export function SearchInput({ value, onChange, placeholder }: { value: string; o
   );
 }
 
-export function FilterSelect({ value, onChange, options, placeholder }: {
+export function FilterSelect({ value, onChange, options, placeholder, onDraftChange }: {
   value: string; onChange: (v: string) => void; options: (string | { value: string; label: string })[]; placeholder: string;
+  onDraftChange?: (v: string) => void;   // opcional: avisa a escolha antes do "Buscar" (ex.: campo da busca)
 }) {
   const { valor, mudar } = useCampoDeBusca(value, onChange);
+  useEffect(() => { onDraftChange?.(valor); }, [valor, onDraftChange]);
   // Filtro preenchido fica destacado para o usuário ver o que está selecionado
   const ativo = valor !== '';
   return (
