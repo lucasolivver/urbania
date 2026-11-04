@@ -6,6 +6,7 @@ import { formatCurrency, formatDate, initials, parseCurrencyInput } from '../lib
 import { imageToDataUrl, parsePhotos } from '../lib/files';
 import { buscarCep } from '../lib/cep';
 import { SearchSelect } from './SearchSelect';
+import { DatePicker, TimePicker } from './DateTimePicker';
 import type { Option } from './SearchSelect';
 import { ConfirmModal, Modal } from './Modal';
 import { useToast } from './Toast';
@@ -242,6 +243,11 @@ export function EntityForm({ title, mode, initial, tabs, defaults = {}, onSubmit
             onChange={v => set(f, v)}
           />
         );
+      // Data e hora com calendário/relógio do sistema (não os nativos do navegador)
+      case 'date':
+        return wrap(<DatePicker aria-label={f.label} disabled={disabled} invalid={invalid} className={inputClass(invalid)} value={value} onChange={v => set(f, v)} placeholder={f.placeholder} />);
+      case 'time':
+        return wrap(<TimePicker aria-label={f.label} disabled={disabled} invalid={invalid} className={inputClass(invalid)} value={value} onChange={v => set(f, v)} />);
       case 'currency':
         return wrap(<input disabled={disabled} aria-invalid={invalid} inputMode="numeric" className={inputClass(invalid)} value={formatCurrency(value)} placeholder="R$ 0,00" onChange={e => set(f, parseCurrencyInput(e.target.value))} />);
       case 'toggle': {

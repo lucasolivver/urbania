@@ -178,6 +178,10 @@
   .dark main .border-\[\#0a2540\], .dark main .border-cadastro { border-color: #5b8bb8; }
   .dark main .focus\:ring-\[\#0a2540\]:focus { --tw-ring-color: #38bdf8; }
   .dark main .from-\[\#0a2540\] { --tw-gradient-from: #1d5a8f; }
+  /* Mesmas regras para os calendários/relógios, que abrem no <body> (fora do main) */
+  .dark .painel-flutuante .text-\[\#0a2540\], .dark .painel-flutuante .hover\:text-\[\#0a2540\]:hover { color: #dbe7f3; }
+  .dark .painel-flutuante .bg-\[\#0a2540\] { background-color: #1d5a8f; }
+  .dark .painel-flutuante .hover\:bg-\[\#06182c\]:hover { background-color: #174a75; }
 
   /* Hovers escuros de botões sólidos (os tons 700/800 viraram claros para texto) */
   .dark .hover\:bg-sky-700:hover { background-color: oklch(50% 0.134 242.749); }
