@@ -39,7 +39,7 @@ export function ReparosList() {
 
   const filtered = rows
     .filter(r => search.filter(r) && (!status || r.status === status))
-    .sort((a, b) => a.id - b.id);
+    .sort((a, b) => b.id - a.id);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
