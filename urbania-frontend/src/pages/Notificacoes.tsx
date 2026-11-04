@@ -70,6 +70,8 @@ export function NotificacoesList() {
   const { rows, setRows, loading, reload } = useList('notificacoes');
   const [term, setTerm] = useState('');
   const [canalFiltro, setCanalFiltro] = useState('');
+  const [publicoFiltro, setPublicoFiltro] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState('');
   const del = useDelete('notificacoes', 'Regra de Notificação', reload);
 
   // Toggle do status diretamente na grid (RNF 1.2)
@@ -87,7 +89,10 @@ export function NotificacoesList() {
     const canais = parseCanais(r.canais || r.canal);
     const matchesCanal = !canalFiltro || canais.includes(canalFiltro);
     const matchesText = matches(term, r.nome, r.gatilho, r.titulo, r.mensagem, r.destinatario);
-    return matchesCanal && matchesText;
+    // Sem valor gravado conta como o que a grid mostra: público Cliente e status Ativo
+    const matchesPublico = !publicoFiltro || (r.destinatario || 'Cliente') === publicoFiltro;
+    const matchesStatus = !statusFiltro || (r.status || 'Ativo') === statusFiltro;
+    return matchesCanal && matchesText && matchesPublico && matchesStatus;
   });
 
   return (
@@ -115,8 +120,20 @@ export function NotificacoesList() {
           <FilterSelect
             value={canalFiltro}
             onChange={setCanalFiltro}
-            options={CANAIS_NOTIFICACAO.map(c => ({ value: c, label: `Mostrar só regras de ${c}` }))}
+            options={CANAIS_NOTIFICACAO}
             placeholder="Todos os canais"
+          />
+          <FilterSelect
+            value={publicoFiltro}
+            onChange={setPublicoFiltro}
+            options={DESTINATARIOS_NOTIFICACAO}
+            placeholder="Todo o público"
+          />
+          <FilterSelect
+            value={statusFiltro}
+            onChange={setStatusFiltro}
+            options={['Ativo', 'Inativo']}
+            placeholder="Todos os status"
           />
         </Toolbar>
 
