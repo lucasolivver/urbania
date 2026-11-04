@@ -211,11 +211,10 @@ export function RowActions({
   );
 }
 
-// ===== Busca com botão =====
-// Dentro de uma <Toolbar>, os campos de busca e filtros guardam um rascunho e só são aplicados
-// ao clicar em "Buscar" (ou Enter). Sem nenhum filtro preenchido, a busca traz todos os registros.
-// Fora de uma Toolbar, os campos continuam filtrando na hora.
-// <Toolbar automatico>: os filtros valem na hora (sem o botão "Buscar"); o "Limpar" continua.
+// ===== Busca e filtros =====
+// Dentro de uma <Toolbar>, os filtros valem na hora: ao digitar e ao escolher uma opção (o "Limpar" zera todos).
+// <Toolbar automatico={false}>: modo antigo, em que os campos guardam um rascunho e só são aplicados
+// ao clicar em "Buscar" (ou Enter). Fora de uma Toolbar, os campos também filtram na hora.
 type CampoDeBusca = { aplicar: () => void; limpar: () => void };
 type BuscaCtx = { registrar: (id: string, campo: CampoDeBusca) => () => void; automatico: boolean };
 const BuscaContext = createContext<BuscaCtx | null>(null);
@@ -278,7 +277,7 @@ export function FilterSelect({ value, onChange, options, placeholder, onDraftCha
   );
 }
 
-export function Toolbar({ children, extraActions, automatico = false }: { children: ReactNode; extraActions?: ReactNode; automatico?: boolean }) {
+export function Toolbar({ children, extraActions, automatico = true }: { children: ReactNode; extraActions?: ReactNode; automatico?: boolean }) {
   const campos = useRef(new Map<string, CampoDeBusca>());
   const [temCampos, setTemCampos] = useState(true);
 
