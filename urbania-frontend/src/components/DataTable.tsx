@@ -215,8 +215,9 @@ export function RowActions({
 // Dentro de uma <Toolbar>, os campos de busca e filtros guardam um rascunho e só são aplicados
 // ao clicar em "Buscar" (ou Enter). Sem nenhum filtro preenchido, a busca traz todos os registros.
 // Fora de uma Toolbar, os campos continuam filtrando na hora.
+// <Toolbar automatico>: os filtros valem na hora (sem o botão "Buscar"); o "Limpar" continua.
 type CampoDeBusca = { aplicar: () => void; limpar: () => void };
-type BuscaCtx = { registrar: (id: string, campo: CampoDeBusca) => () => void };
+type BuscaCtx = { registrar: (id: string, campo: CampoDeBusca) => () => void; automatico: boolean };
 const BuscaContext = createContext<BuscaCtx | null>(null);
 
 export function useCampoDeBusca(value: string, onChange: (v: string) => void) {
@@ -234,6 +235,7 @@ export function useCampoDeBusca(value: string, onChange: (v: string) => void) {
     limpar: () => { setRascunho(''); atual.current.onChange(''); },
   }), [ctx, id]);
 
+  if (ctx?.automatico) return { valor: value, mudar: (v: string) => { setRascunho(v); onChange(v); } };
   return ctx ? { valor: rascunho, mudar: setRascunho } : { valor: value, mudar: onChange };
 }
 
@@ -264,7 +266,7 @@ export function FilterSelect({ value, onChange, options, placeholder, onDraftCha
   return (
     <div className="relative w-full md:w-auto">
       <Select
-        value={valor} onChange={selectedValue => mudar(selectedValue)} title={placeholder} data-filled={ativo}
+        value={valor} onChange={selectedValue => mudar(selectedValue)} title={placeholder} placeholder={placeholder} data-filled={ativo}
         className={`${campoBase} w-full md:w-auto md:min-w-[10rem] appearance-none cursor-pointer pl-3.5 pr-10 ${ativo ? 'border-cadastro/30 bg-cadastro/5 text-cadastro font-medium' : 'border-slate-200 text-slate-600'}`}
       >
         <option value="">{placeholder}</option>
@@ -276,7 +278,7 @@ export function FilterSelect({ value, onChange, options, placeholder, onDraftCha
   );
 }
 
-export function Toolbar({ children, extraActions }: { children: ReactNode; extraActions?: ReactNode }) {
+export function Toolbar({ children, extraActions, automatico = false }: { children: ReactNode; extraActions?: ReactNode; automatico?: boolean }) {
   const campos = useRef(new Map<string, CampoDeBusca>());
   const [temCampos, setTemCampos] = useState(true);
 
@@ -289,7 +291,8 @@ export function Toolbar({ children, extraActions }: { children: ReactNode; extra
         setTemCampos(campos.current.size > 0);
       };
     },
-  }), []);
+    automatico,
+  }), [automatico]);
 
   const buscar = () => campos.current.forEach(c => c.aplicar());
   const limpar = () => campos.current.forEach(c => c.limpar());
@@ -320,14 +323,14 @@ export function Toolbar({ children, extraActions }: { children: ReactNode; extra
               >
                 <RotateCcw size={14} className="text-slate-500" /> Limpar
               </button>
-              <button
+              {!automatico && <button
                 type="button"
                 onClick={buscar}
                 title="Buscar (sem filtros, mostra todos)"
                 className="h-9 px-5 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0a2540] text-xs font-bold text-white shadow-sm hover:bg-[#06182c] active:scale-95 transition cursor-pointer"
               >
                 <Search size={14} className="text-sky-300" /> Buscar
-              </button>
+              </button>}
             </div>
           </div>
         )}

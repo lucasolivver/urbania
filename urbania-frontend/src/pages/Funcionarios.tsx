@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, CalendarCheck, CalendarClock, Plus, Shield } from 'lucide-react';
 import { api } from '../api';
-import { Card, DataTable, FilterSelect, PageHeader, RowActions, SearchInput, Toolbar, matches } from '../components/DataTable';
+import { Card, DataTable, FilterSelect, PageHeader, RowActions, Toolbar } from '../components/DataTable';
 import { Avatar } from '../components/EntityForm';
 import type { Mode, TabDef } from '../components/EntityForm';
 import { EntityPage } from '../components/EntityPage';
+import { useFieldSearch } from '../components/FieldSearch';
 import { apiError, useToast } from '../components/Toast';
 import { useDelete } from '../components/useDelete';
 import { useList } from '../lib/useApi';
@@ -20,15 +21,22 @@ export function FuncionariosList() {
   const toast = useToast();
   const { rows, setRows, loading, reload } = useList('funcionarios');
   const perfis = useList('perfis');
-  const [term, setTerm] = useState('');
   const [perfilId, setPerfilId] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('');
   const del = useDelete('funcionarios', 'Funcionário', reload);
+  // RF F6 NF 2.3: busca por nome ou CPF escolhidos no ComboBox (CPF com ou sem pontuação)
+  const search = useFieldSearch<any>([
+    { value: 'nome', label: 'Nome', get: f => f.nome },
+    { value: 'cpf', label: 'CPF', get: f => (f.cpf ? `${f.cpf} ${onlyDigits(f.cpf)}` : '') },
+    { value: 'email', label: 'E-mail', get: f => f.email },
+    { value: 'cargo', label: 'Função', get: f => f.cargo },
+  ]);
 
+  // Sem status gravado conta como Ativo, igual ao que a coluna mostra
   const filtered = rows
     .filter(f => !perfilId || String(f.perfilId) === perfilId)
-    .filter(f => !statusFiltro || f.status === statusFiltro)
-    .filter(f => matches(term, f.nome, f.cpf, onlyDigits(f.cpf), f.email, f.cargo, f.id));
+    .filter(f => !statusFiltro || (f.status || 'Ativo') === statusFiltro)
+    .filter(search.filter);
 
   const setStatus = async (id: number, status: string) => {
     try {
@@ -47,8 +55,8 @@ export function FuncionariosList() {
         action={<Pode acao="Criar"><button onClick={() => navigate('/funcionarios/novo')} className="flex items-center gap-2 bg-[#0a2540] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#06182c]"><Plus size={18} /> Novo Funcionário</button></Pode>}
       />
       <Card>
-        <Toolbar>
-          <SearchInput value={term} onChange={setTerm} placeholder="Buscar por nome, CPF, e-mail ou cargo..." />
+        <Toolbar automatico>
+          {search.controls}
           <FilterSelect
             value={perfilId}
             onChange={setPerfilId}

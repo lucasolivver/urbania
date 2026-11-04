@@ -307,7 +307,7 @@ export default function Auditoria() {
 
       <Card>
         <div className="no-print print:hidden">
-          <Toolbar>
+          <Toolbar automatico>
             <SearchInput
               value={term}
               onChange={setTerm}

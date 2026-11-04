@@ -68,7 +68,7 @@ export function PerfisList() {
       />
 
       <Card>
-        <Toolbar>
+        <Toolbar automatico>
           <SearchInput
             value={term}
             onChange={setTerm}
