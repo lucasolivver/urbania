@@ -19,8 +19,9 @@ export const precoImovel = (i: Record<string, any>) =>
     ? (i.precoAluguel ? `${formatCurrency(i.precoAluguel)}/mês` : 'Sob consulta')
     : (i.precoVenda ? formatCurrency(i.precoVenda) : 'Sob consulta');
 
-export const enderecoCurto = (i: Record<string, any>) =>
-  [[i.logradouro, i.numero].filter(Boolean).join(', '), i.bairro, [i.cidade, i.uf].filter(Boolean).join('/')].filter(Boolean).join(' - ');
+// Aceita imóvel ausente (lista de imóveis ainda carregando ou imóvel excluído)
+export const enderecoCurto = (i: Record<string, any> | undefined) =>
+  !i ? '' : [[i.logradouro, i.numero].filter(Boolean).join(', '), i.bairro, [i.cidade, i.uf].filter(Boolean).join('/')].filter(Boolean).join(' - ');
 
 // Consultar Imóveis
 export function ImoveisList() {
