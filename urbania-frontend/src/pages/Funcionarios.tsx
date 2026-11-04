@@ -55,7 +55,7 @@ export function FuncionariosList() {
         action={<Pode acao="Criar"><button onClick={() => navigate('/funcionarios/novo')} className="flex items-center gap-2 bg-[#0a2540] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#06182c]"><Plus size={18} /> Novo Funcionário</button></Pode>}
       />
       <Card>
-        <Toolbar automatico>
+        <Toolbar>
           {search.controls}
           <FilterSelect
             value={perfilId}
